@@ -4,6 +4,64 @@
 
 namespace bsim {
 
+	BoxShape::BoxShape(btRigidBody* body) {
+		shape_type = Shape::SHAPE_BOX;
+		this->body = body;
+		color = btVector3(utils::genRand(0, 1), utils::genRand(0, 1), utils::genRand(0, 1));
+	}
+
+	void BoxShape::draw(QPainter& painter) {
+		btTransform trans;
+		body->getMotionState()->getWorldTransform(trans);
+
+		float x = trans.getOrigin().getX() * 100;
+		float y = 800 - trans.getOrigin().getY() * 100;
+		btQuaternion qt = trans.getRotation();
+		float angle = -atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z())) / 3.141592 * 180;
+
+		painter.save();
+		QColor color(color.x() * 255, color.y() * 255, color.z() * 255);
+		painter.setBrush(QBrush(color));
+		painter.setPen(QColor(0, 0, 0));
+		painter.translate(x, y);
+		painter.rotate(angle);
+
+		btBoxShape* shape = static_cast<btBoxShape*>(body->getCollisionShape());
+		btVector3 size = shape->getHalfExtentsWithMargin();
+		painter.drawRect(-size.x() * 100, -size.y() * 100, size.x() * 200, size.y() * 200);
+
+		painter.restore();
+	}
+
+	SphereShape::SphereShape(btRigidBody* body) {
+		shape_type = Shape::SHAPE_SPHERE;
+		this->body = body;
+		color = btVector3(utils::genRand(0, 1), utils::genRand(0, 1), utils::genRand(0, 1));
+	}
+
+	void SphereShape::draw(QPainter& painter) {
+		btTransform trans;
+		body->getMotionState()->getWorldTransform(trans);
+
+		float x = trans.getOrigin().getX() * 100;
+		float y = 800 - trans.getOrigin().getY() * 100;
+		btQuaternion qt = trans.getRotation();
+		float angle = -atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z())) / 3.141592 * 180;
+
+		painter.save();
+		QColor color(color.x() * 255, color.y() * 255, color.z() * 255);
+		painter.setBrush(QBrush(color));
+		painter.setPen(QColor(0, 0, 0));
+		painter.translate(x, y);
+		painter.rotate(angle);
+
+		btSphereShape* shape = static_cast<btSphereShape*>(body->getCollisionShape());
+		float radius = shape->getRadius();
+		painter.drawEllipse(QPointF(0, 0), radius * 100, radius * 100);
+
+		painter.restore();
+	}
+
 	BulletSim::BulletSim() {
 		///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
 		collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -36,37 +94,8 @@ namespace bsim {
 	}
 
 	void BulletSim::draw(QPainter& painter) {
-		//for (int i = 0; i < dynamicsWorld->getNumCollisionObjects(); i++) {
 		for (int i = 0; i < shapes.size(); i++) {
-			//btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
-			//btRigidBody* body = btRigidBody::upcast(obj);
-			btRigidBody* body = shapes[i].body;
-			btTransform trans;
-			if (body && body->getMotionState()) {
-				body->getMotionState()->getWorldTransform(trans);
-
-				float x = trans.getOrigin().getX() * 100;
-				float y = 800 - trans.getOrigin().getY() * 100;
-				btQuaternion qt = trans.getRotation();
-				float angle = -atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z())) / 3.141592 * 180;
-
-				painter.save();
-				QColor color((i * 30 + 255) % 256, (i * 79 + 255) % 256, (i * 83 + 255) % 256);
-				painter.setBrush(QBrush(color));
-				painter.setPen(QColor(0, 0, 0));
-				painter.translate(x, y);
-				painter.rotate(angle);
-
-				//if (obj->getCollisionShape()->getShapeType() == BOX_SHAPE_PROXYTYPE) {
-				if (shapes[i].shape_type == Shape::SHAPE_BOX) {
-					//btBoxShape* shape = static_cast<btBoxShape*>(obj->getCollisionShape());
-					btBoxShape* shape = static_cast<btBoxShape*>(shapes[i].body->getCollisionShape());
-					btVector3 size = shape->getHalfExtentsWithMargin();
-					painter.drawRect(-size.x() * 100, -size.y() * 100, size.x() * 200, size.y() * 200);
-				}
-
-				painter.restore();
-			}
+			shapes[i]->draw(painter);
 		}
 	}
 
@@ -77,7 +106,12 @@ namespace bsim {
 		barBody = addBoxObject(btVector3(4, 4, 0), btVector3(1, 0.1, 5), false);
 
 		for (int i = 0; i < 100; i++) {
-			addBoxObject(btVector3(utils::genRand(1, 7), utils::genRand(2, 7), 0), btVector3(0.2, 0.2, 0.2), true);
+			if (utils::genRand() > 0.5) {
+				addBoxObject(btVector3(utils::genRand(1, 7), utils::genRand(2, 7), 0), btVector3(0.2, 0.2, 0.2), true);
+			}
+			else {
+				addSphereObject(btVector3(utils::genRand(1, 7), utils::genRand(2, 7), 0), 0.2, true);
+			}
 		}
 	}
 
@@ -99,13 +133,13 @@ namespace bsim {
 
 	btRigidBody* BulletSim::addBoxObject(btVector3 origin, btVector3 size, bool dynamic) {
 		btRigidBody* body = addObject(origin, new btBoxShape(size), dynamic);
-		shapes.push_back(Shape(Shape::SHAPE_BOX, body));
+		shapes.push_back(new BoxShape(body));
 		return body;
 	}
 
 	btRigidBody* BulletSim::addSphereObject(btVector3 origin, btScalar radius, bool dynamic) {
 		btRigidBody* body = addObject(origin, new btSphereShape(radius), dynamic);
-		shapes.push_back(Shape(Shape::SHAPE_SPHERE, body));
+		shapes.push_back(new SphereShape(body));
 		return body;
 	}
 

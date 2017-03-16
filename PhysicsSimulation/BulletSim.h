@@ -15,7 +15,19 @@ namespace bsim {
 		btVector3 color;
 
 	public:
-		Shape(int shape_type, btRigidBody* body) : shape_type(shape_type), body(body) {}
+		virtual void draw(QPainter& painter) = 0;
+	};
+
+	class BoxShape : public Shape {
+	public:
+		BoxShape(btRigidBody* body);
+		void draw(QPainter& painter);
+	};
+
+	class SphereShape : public Shape {
+	public:
+		SphereShape(btRigidBody* body);
+		void draw(QPainter& painter);
 	};
 
 	class BulletSim {
@@ -26,7 +38,7 @@ namespace bsim {
 		btSequentialImpulseConstraintSolver* solver;
 		btDiscreteDynamicsWorld* dynamicsWorld;
 		btRigidBody* barBody;
-		std::vector<Shape> shapes;
+		std::vector<Shape*> shapes;
 
 	public:
 		BulletSim();
