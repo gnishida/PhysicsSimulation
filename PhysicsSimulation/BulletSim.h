@@ -25,8 +25,6 @@ namespace bsim {
 		btBroadphaseInterface* overlappingPairCache;
 		btSequentialImpulseConstraintSolver* solver;
 		btDiscreteDynamicsWorld* dynamicsWorld;
-		btAlignedObjectArray<btCollisionShape*> collisionShapes;
-		//btDefaultMotionState* barMotionState;
 		btRigidBody* barBody;
 		std::vector<Shape> shapes;
 

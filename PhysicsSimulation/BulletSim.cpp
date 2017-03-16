@@ -85,18 +85,16 @@ namespace bsim {
 		for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--) {
 			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
 			btRigidBody* body = btRigidBody::upcast(obj);
+			btCollisionShape* shape = NULL;
 			if (body && body->getMotionState()) {
+				delete body->getCollisionShape();
 				delete body->getMotionState();
 			}
 			dynamicsWorld->removeCollisionObject(obj);
 			delete obj;
 		}
 
-		for (int i = 0; i < collisionShapes.size(); i++) {
-			btCollisionShape* shape = collisionShapes[i];
-			collisionShapes[i] = 0;
-			delete shape;
-		}
+		shapes.clear();
 	}
 
 	btRigidBody* BulletSim::addBoxObject(btVector3 origin, btVector3 size, bool dynamic) {
@@ -129,8 +127,7 @@ namespace bsim {
 	}
 
 	btRigidBody* BulletSim::addObject(btVector3 origin, btCollisionShape* shape, bool dynamic) {
-		collisionShapes.push_back(shape);
-		//shapes.push_back(shape);
+		//collisionShapes.push_back(shape);
 
 		// set transform
 		btTransform transform;
