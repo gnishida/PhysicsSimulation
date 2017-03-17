@@ -25,7 +25,7 @@ namespace bsim {
 		void save(const QString& filename);
 		btRigidBody* addBoxObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color);
 		btRigidBody* addSphereObject(btVector3 origin, btScalar radius, bool dynamic, btVector3 color);
-		btRigidBody* addRevolvingBarObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color);
+		btRigidBody* addRevolvingBarObject(btVector3 origin, btVector3 size, btVector3 color, float angular_speed);
 		void stepSimulation(float timeStep);
 
 	private:

@@ -33,6 +33,9 @@ namespace bsim {
 		painter.restore();
 	}
 
+	void SphereShape::customStepForward() {
+	}
+
 	QDomElement SphereShape::toXml(QDomDocument& doc) {
 		QDomElement node = doc.createElement("shape");
 		node.setAttribute("type", "sphere");

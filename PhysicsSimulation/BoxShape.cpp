@@ -33,6 +33,9 @@ namespace bsim {
 		painter.restore();
 	}
 
+	void BoxShape::customStepForward() {
+	}
+
 	QDomElement BoxShape::toXml(QDomDocument& doc) {
 		QDomElement node = doc.createElement("shape");
 		node.setAttribute("type", "box");

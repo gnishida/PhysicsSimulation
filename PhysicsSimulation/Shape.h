@@ -18,6 +18,7 @@ namespace bsim {
 
 	public:
 		virtual void draw(QPainter& painter) = 0;
+		virtual void customStepForward() = 0;
 		virtual QDomElement toXml(QDomDocument& doc) = 0;
 	};
 

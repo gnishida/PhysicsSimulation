@@ -49,7 +49,7 @@ namespace bsim {
 		clear();
 
 		addBoxObject(btVector3(4, -4, 0), btVector3(5, 5, 5), false, btVector3(1, 1, 1));
-		addRevolvingBarObject(btVector3(4, 4, 0), btVector3(1, 0.1, 5), false, btVector3(0.5, 0.5, 0.5));
+		addRevolvingBarObject(btVector3(4, 4, 0), btVector3(1, 0.1, 5), btVector3(0.5, 0.5, 0.5), 0.01);
 	}
 
 	void BulletSim::clear() {
@@ -105,7 +105,8 @@ namespace bsim {
 					float size_x = node.toElement().attribute("size_x").toFloat();
 					float size_y = node.toElement().attribute("size_y").toFloat();
 					float size_z = node.toElement().attribute("size_z").toFloat();
-					addRevolvingBarObject(btVector3(origin_x, origin_y, 0), btVector3(size_x, size_y, size_z), dynamic, btVector3(color_x, color_y, color_z));
+					float angular_speed = node.toElement().attribute("angular_speed").toFloat();
+					addRevolvingBarObject(btVector3(origin_x, origin_y, 0), btVector3(size_x, size_y, size_z), btVector3(color_x, color_y, color_z), angular_speed);
 				}
 			}
 
@@ -149,15 +150,17 @@ namespace bsim {
 		return body;
 	}
 
-	btRigidBody* BulletSim::addRevolvingBarObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color) {
-		btRigidBody* body = addObject(origin, new btBoxShape(size), dynamic);
-		shapes.push_back(new RevolvingBarShape(body, dynamic, color));
+	btRigidBody* BulletSim::addRevolvingBarObject(btVector3 origin, btVector3 size, btVector3 color, float angular_speed) {
+		btRigidBody* body = addObject(origin, new btBoxShape(size), false);
+		shapes.push_back(new RevolvingBarShape(body, false, color, angular_speed));
 		return body;
 	}
 
 	void BulletSim::stepSimulation(float timeStep) {
 		for (int i = 0; i < shapes.size(); ++i) {
 			if (shapes[i]->shape_type == Shape::SHAPE_REVOLVING_BAR) {
+				shapes[i]->customStepForward();
+				/*
 				btTransform trans = shapes[i]->body->getWorldTransform();
 				btQuaternion qt = trans.getRotation();
 				float angle = atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z()));
@@ -166,6 +169,7 @@ namespace bsim {
 				trans.setOrigin(btVector3(4, 4, 0));
 				shapes[i]->body->setWorldTransform(trans);
 				shapes[i]->body->getMotionState()->setWorldTransform(trans);
+				*/
 			}
 		}
 

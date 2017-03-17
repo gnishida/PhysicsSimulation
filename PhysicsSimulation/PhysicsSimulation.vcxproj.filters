@@ -105,9 +105,6 @@
     <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RevolvingBarShape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Shape.h">
       <Filter>Source Files\shape</Filter>
     </ClInclude>
@@ -115,6 +112,9 @@
       <Filter>Source Files\shape</Filter>
     </ClInclude>
     <ClInclude Include="BoxShape.h">
+      <Filter>Source Files\shape</Filter>
+    </ClInclude>
+    <ClInclude Include="RevolvingBarShape.h">
       <Filter>Source Files\shape</Filter>
     </ClInclude>
   </ItemGroup>
