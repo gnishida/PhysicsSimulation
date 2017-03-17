@@ -6,10 +6,7 @@
 #include <QMessageBox>
 #include <QResizeEvent>
 #include <QtWidgets/QApplication>
-
-#ifndef SQR
-#define SQR(x)	((x) * (x))
-#endif
+#include "Utils.h"
 
 Canvas::Canvas(QWidget *parent) : QWidget(parent) {
 	ctrlPressed = false;
@@ -24,6 +21,15 @@ Canvas::~Canvas() {
 void Canvas::init() {
 	sim.init();
 	update();
+}
+
+void Canvas::open(const QString& filename) {
+	sim.load(filename);
+	update();
+}
+
+void Canvas::save(const QString& filename) {
+	sim.save(filename);
 }
 
 void Canvas::run() {
@@ -63,6 +69,13 @@ void Canvas::paintEvent(QPaintEvent *e) {
 }
 
 void Canvas::mousePressEvent(QMouseEvent* e) {
+	if (e->button() == Qt::LeftButton) {
+		sim.addBoxObject(btVector3((float)e->x() / 100, (800 - (float)e->y()) / 100, 0), btVector3(0.2, 0.2, 0.2), true, btVector3(utils::genRand(), utils::genRand(), utils::genRand()));
+	}
+	else if (e->button() == Qt::RightButton) {
+		sim.addSphereObject(btVector3((float)e->x() / 100, (800 - (float)e->y()) / 100, 0), 0.2, true, btVector3(utils::genRand(), utils::genRand(), utils::genRand()));
+	}
+	update();
 }
 
 void Canvas::mouseMoveEvent(QMouseEvent* e) {

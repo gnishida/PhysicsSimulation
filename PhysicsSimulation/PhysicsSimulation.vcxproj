@@ -137,6 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BoxShape.cpp" />
     <ClCompile Include="BulletSim.cpp" />
     <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_Canvas.cpp">
@@ -167,6 +168,9 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="RevolvingBarShape.cpp" />
+    <ClCompile Include="Shape.cpp" />
+    <ClCompile Include="SphereShape.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -210,7 +214,11 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BoxShape.h" />
     <ClInclude Include="BulletSim.h" />
+    <ClInclude Include="RevolvingBarShape.h" />
+    <ClInclude Include="Shape.h" />
+    <ClInclude Include="SphereShape.h" />
     <ClInclude Include="Utils.h" />
     <CustomBuild Include="Canvas.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>

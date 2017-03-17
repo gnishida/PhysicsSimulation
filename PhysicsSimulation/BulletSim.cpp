@@ -1,73 +1,21 @@
 #include "BulletSim.h"
 #include "Utils.h"
 #include <iostream>
+#include <QFile>
+#include <QDate>
+#include <QTextStream>
+#include "BoxShape.h"
+#include "SphereShape.h"
+#include "RevolvingBarShape.h"
 
 namespace bsim {
-
-	BoxShape::BoxShape(btRigidBody* body) {
-		shape_type = Shape::SHAPE_BOX;
-		this->body = body;
-		color = btVector3(utils::genRand(0, 1), utils::genRand(0, 1), utils::genRand(0, 1));
-	}
-
-	void BoxShape::draw(QPainter& painter) {
-		btTransform trans;
-		body->getMotionState()->getWorldTransform(trans);
-
-		float x = trans.getOrigin().getX() * 100;
-		float y = 800 - trans.getOrigin().getY() * 100;
-		btQuaternion qt = trans.getRotation();
-		float angle = -atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z())) / 3.141592 * 180;
-
-		painter.save();
-		QColor color(color.x() * 255, color.y() * 255, color.z() * 255);
-		painter.setBrush(QBrush(color));
-		painter.setPen(QColor(0, 0, 0));
-		painter.translate(x, y);
-		painter.rotate(angle);
-
-		btBoxShape* shape = static_cast<btBoxShape*>(body->getCollisionShape());
-		btVector3 size = shape->getHalfExtentsWithMargin();
-		painter.drawRect(-size.x() * 100, -size.y() * 100, size.x() * 200, size.y() * 200);
-
-		painter.restore();
-	}
-
-	SphereShape::SphereShape(btRigidBody* body) {
-		shape_type = Shape::SHAPE_SPHERE;
-		this->body = body;
-		color = btVector3(utils::genRand(0, 1), utils::genRand(0, 1), utils::genRand(0, 1));
-	}
-
-	void SphereShape::draw(QPainter& painter) {
-		btTransform trans;
-		body->getMotionState()->getWorldTransform(trans);
-
-		float x = trans.getOrigin().getX() * 100;
-		float y = 800 - trans.getOrigin().getY() * 100;
-		btQuaternion qt = trans.getRotation();
-		float angle = -atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z())) / 3.141592 * 180;
-
-		painter.save();
-		QColor color(color.x() * 255, color.y() * 255, color.z() * 255);
-		painter.setBrush(QBrush(color));
-		painter.setPen(QColor(0, 0, 0));
-		painter.translate(x, y);
-		painter.rotate(angle);
-
-		btSphereShape* shape = static_cast<btSphereShape*>(body->getCollisionShape());
-		float radius = shape->getRadius();
-		painter.drawEllipse(QPointF(0, 0), radius * 100, radius * 100);
-
-		painter.restore();
-	}
 
 	BulletSim::BulletSim() {
 		///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
 		collisionConfiguration = new btDefaultCollisionConfiguration();
 
 		///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-		dispatcher = new	btCollisionDispatcher(collisionConfiguration);
+		dispatcher = new btCollisionDispatcher(collisionConfiguration);
 
 		///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
 		overlappingPairCache = new btDbvtBroadphase();
@@ -77,8 +25,6 @@ namespace bsim {
 
 		dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 		dynamicsWorld->setGravity(btVector3(0, -9.8, 0));
-
-		barBody = NULL;
 
 		init();
 	}
@@ -102,17 +48,8 @@ namespace bsim {
 	void BulletSim::init() {
 		clear();
 
-		addBoxObject(btVector3(4, -4, 0), btVector3(5, 5, 5), false);
-		barBody = addBoxObject(btVector3(4, 4, 0), btVector3(1, 0.1, 5), false);
-
-		for (int i = 0; i < 100; i++) {
-			if (utils::genRand() > 0.5) {
-				addBoxObject(btVector3(utils::genRand(1, 7), utils::genRand(2, 7), 0), btVector3(0.2, 0.2, 0.2), true);
-			}
-			else {
-				addSphereObject(btVector3(utils::genRand(1, 7), utils::genRand(2, 7), 0), 0.2, true);
-			}
-		}
+		addBoxObject(btVector3(4, -4, 0), btVector3(5, 5, 5), false, btVector3(1, 1, 1));
+		addRevolvingBarObject(btVector3(4, 4, 0), btVector3(1, 0.1, 5), false, btVector3(0.5, 0.5, 0.5));
 	}
 
 	void BulletSim::clear() {
@@ -131,38 +68,111 @@ namespace bsim {
 		shapes.clear();
 	}
 
-	btRigidBody* BulletSim::addBoxObject(btVector3 origin, btVector3 size, bool dynamic) {
+	void BulletSim::load(const QString& filename) {
+		QFile file(filename);
+		if (!file.open(QFile::ReadOnly | QFile::Text)) throw "Fild cannot open.";
+
+		QDomDocument doc;
+		doc.setContent(&file);
+
+		QDomElement root = doc.documentElement();
+		if (root.tagName() != "world")	throw "Invalid file format.";
+
+		// clear the data
+		clear();
+
+		QDomNode node = root.firstChild();
+		while (!node.isNull()) {
+			if (node.toElement().tagName() == "shape") {
+				QString type = node.toElement().attribute("type");
+				float origin_x = node.toElement().attribute("origin_x").toFloat();
+				float origin_y = node.toElement().attribute("origin_y").toFloat();
+				bool dynamic = node.toElement().attribute("dynamic").toLower() == "true";
+				float color_x = node.toElement().attribute("color_x").toFloat();
+				float color_y = node.toElement().attribute("color_y").toFloat();
+				float color_z = node.toElement().attribute("color_z").toFloat();
+				if (type == "box") {
+					float size_x = node.toElement().attribute("size_x").toFloat();
+					float size_y = node.toElement().attribute("size_y").toFloat();
+					float size_z = node.toElement().attribute("size_z").toFloat();
+					addBoxObject(btVector3(origin_x, origin_y, 0), btVector3(size_x, size_y, size_z), dynamic, btVector3(color_x, color_y, color_z));
+				}
+				else if (type == "sphere") {
+					float radius = node.toElement().attribute("radius").toFloat();
+					addSphereObject(btVector3(origin_x, origin_y, 0), radius, dynamic, btVector3(color_x, color_y, color_z));
+				}
+				else if (type == "revolving_bar") {
+					float size_x = node.toElement().attribute("size_x").toFloat();
+					float size_y = node.toElement().attribute("size_y").toFloat();
+					float size_z = node.toElement().attribute("size_z").toFloat();
+					addRevolvingBarObject(btVector3(origin_x, origin_y, 0), btVector3(size_x, size_y, size_z), dynamic, btVector3(color_x, color_y, color_z));
+				}
+			}
+
+			node = node.nextSibling();
+		}
+	}
+
+	void BulletSim::save(const QString& filename) {
+		QFile file(filename);
+		if (!file.open(QFile::WriteOnly)) throw "File cannot open.";
+
+		QDomDocument doc;
+
+		// set root node
+		QDomElement root = doc.createElement("world");
+		root.setAttribute("author", "Gen Nishida");
+		root.setAttribute("version", "1.0");
+		root.setAttribute("date", QDate::currentDate().toString("MM/dd/yyyy"));
+		doc.appendChild(root);
+
+		// write shapes
+		for (int i = 0; i < shapes.size(); ++i) {
+			QDomElement shape_node = shapes[i]->toXml(doc);
+			root.appendChild(shape_node);
+		}
+
+		QTextStream out(&file);
+		doc.save(out, 4);
+
+	}
+
+	btRigidBody* BulletSim::addBoxObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color) {
 		btRigidBody* body = addObject(origin, new btBoxShape(size), dynamic);
-		shapes.push_back(new BoxShape(body));
+		shapes.push_back(new BoxShape(body, dynamic, color));
 		return body;
 	}
 
-	btRigidBody* BulletSim::addSphereObject(btVector3 origin, btScalar radius, bool dynamic) {
+	btRigidBody* BulletSim::addSphereObject(btVector3 origin, btScalar radius, bool dynamic, btVector3 color) {
 		btRigidBody* body = addObject(origin, new btSphereShape(radius), dynamic);
-		shapes.push_back(new SphereShape(body));
+		shapes.push_back(new SphereShape(body, dynamic, color));
+		return body;
+	}
+
+	btRigidBody* BulletSim::addRevolvingBarObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color) {
+		btRigidBody* body = addObject(origin, new btBoxShape(size), dynamic);
+		shapes.push_back(new RevolvingBarShape(body, dynamic, color));
 		return body;
 	}
 
 	void BulletSim::stepSimulation(float timeStep) {
-		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[1];
-		btRigidBody* body = btRigidBody::upcast(obj);
-		btTransform trans = body->getWorldTransform();
-		btQuaternion qt = trans.getRotation();
-		float angle = atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z()));
-		//std::cout << "angle: " << angle << std::endl;
-		//std::cout << qt.x() << "," << qt.y() << "," << qt.z() << "," << qt.w() << std::endl;
-		qt.setEuler(0, 0, angle + 0.01);
-		trans.setRotation(qt);
-		trans.setOrigin(btVector3(4, 4, 0));
-		body->setWorldTransform(trans);
-		barBody->getMotionState()->setWorldTransform(trans);
+		for (int i = 0; i < shapes.size(); ++i) {
+			if (shapes[i]->shape_type == Shape::SHAPE_REVOLVING_BAR) {
+				btTransform trans = shapes[i]->body->getWorldTransform();
+				btQuaternion qt = trans.getRotation();
+				float angle = atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z()));
+				qt.setEuler(0, 0, angle + 0.01);
+				trans.setRotation(qt);
+				trans.setOrigin(btVector3(4, 4, 0));
+				shapes[i]->body->setWorldTransform(trans);
+				shapes[i]->body->getMotionState()->setWorldTransform(trans);
+			}
+		}
 
 		dynamicsWorld->stepSimulation(timeStep, 10);
 	}
 
 	btRigidBody* BulletSim::addObject(btVector3 origin, btCollisionShape* shape, bool dynamic) {
-		//collisionShapes.push_back(shape);
-
 		// set transform
 		btTransform transform;
 		transform.setIdentity();
@@ -175,7 +185,7 @@ namespace bsim {
 			shape->calculateLocalInertia(mass, localInertia);
 		}
 
-		//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+		// using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 		btDefaultMotionState* myMotionState = new btDefaultMotionState(transform);
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
 		btRigidBody* body = new btRigidBody(rbInfo);

@@ -21,6 +21,8 @@ public:
     ~Canvas();
 
 	void init();
+	void open(const QString& filename);
+	void save(const QString& filename);
 	void run();
 	void stop();
 

@@ -19,6 +19,8 @@ public:
 
 public slots:
 	void onNew();
+	void onOpen();
+	void onSave();
 	void onRun();
 	void onStop();
 };

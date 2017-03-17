@@ -1,0 +1,18 @@
+<world date="03/16/2017" version="1.0" author="Gen Nishida">
+    <shape origin_y="-4" type="box" size_z="5" size_x="5" size_y="5" origin_x="4" dynamic="false"/>
+    <shape origin_y="4" type="revolving_bar" size_z="5" size_x="1" size_y="0.1" origin_x="4" dynamic="false"/>
+    <shape origin_y="1.19967" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="6.31515" dynamic="true"/>
+    <shape origin_y="1.59853" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="6.36178" dynamic="true"/>
+    <shape origin_y="1.99679" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="6.33353" dynamic="true"/>
+    <shape origin_y="2.39596" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="6.30051" dynamic="true"/>
+    <shape origin_y="2.79408" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="6.27233" dynamic="true"/>
+    <shape origin_y="3.19521" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="6.31445" dynamic="true"/>
+    <shape origin_y="3.59307" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="6.2753" dynamic="true"/>
+    <shape origin_y="3.99039" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="6.21463" dynamic="true"/>
+    <shape origin_y="-5834.89" type="sphere" origin_x="-59.513" radius="0.2" dynamic="true"/>
+    <shape origin_y="-2345.43" type="sphere" origin_x="-68.7784" radius="0.2" dynamic="true"/>
+    <shape origin_y="-2017.03" type="sphere" origin_x="-71.3188" radius="0.2" dynamic="true"/>
+    <shape origin_y="1.2" type="box" size_z="0.2" size_x="0.2" size_y="0.2" origin_x="1.01062" dynamic="true"/>
+    <shape origin_y="1.2" type="sphere" origin_x="1.41395" radius="0.2" dynamic="true"/>
+    <shape origin_y="1.2" type="sphere" origin_x="5.78366" radius="0.2" dynamic="true"/>
+</world>
