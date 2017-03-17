@@ -3,16 +3,14 @@
 
 namespace bsim {
 
-	RevolvingBarShape::RevolvingBarShape(btRigidBody* body, bool dynamic, btVector3 color, float angular_speed) {
+	RevolvingBarShape::RevolvingBarShape(btRigidBody* body, bool dynamic, btVector3 color) {
 		shape_type = Shape::SHAPE_REVOLVING_BAR;
 		this->body = body;
 		this->dynamic = dynamic;
 		this->color = color;
-		this->angular_speed = angular_speed;
 
 		btTransform trans;
 		body->getMotionState()->getWorldTransform(trans);
-		this->origin = trans.getOrigin();
 	}
 
 	void RevolvingBarShape::draw(QPainter& painter) {
@@ -42,17 +40,6 @@ namespace bsim {
 		painter.restore();
 	}
 
-	void RevolvingBarShape::customStepForward() {
-		btTransform trans = body->getWorldTransform();
-		btQuaternion qt = trans.getRotation();
-		float angle = atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z()));
-		qt.setEuler(0, 0, angle + angular_speed);
-		trans.setRotation(qt);
-		trans.setOrigin(origin);
-		body->setWorldTransform(trans);
-		body->getMotionState()->setWorldTransform(trans);
-	}
-
 	QDomElement RevolvingBarShape::toXml(QDomDocument& doc) {
 		QDomElement node = doc.createElement("shape");
 		node.setAttribute("type", "revolving_bar");
@@ -64,16 +51,18 @@ namespace bsim {
 		btTransform trans;
 		body->getMotionState()->getWorldTransform(trans);
 
-		node.setAttribute("origin_x", origin.getX());// trans.getOrigin().getX());
-		node.setAttribute("origin_y", origin.getY());// trans.getOrigin().getY());
+		node.setAttribute("origin_x", trans.getOrigin().getX());
+		node.setAttribute("origin_y", trans.getOrigin().getY());
+		node.setAttribute("quaternion_x", trans.getRotation().getX());
+		node.setAttribute("quaternion_y", trans.getRotation().getY());
+		node.setAttribute("quaternion_z", trans.getRotation().getZ());
+		node.setAttribute("quaternion_w", trans.getRotation().getW());
 
 		btBoxShape* shape = static_cast<btBoxShape*>(body->getCollisionShape());
 		btVector3 size = shape->getHalfExtentsWithMargin();
 		node.setAttribute("size_x", size.x());
 		node.setAttribute("size_y", size.y());
 		node.setAttribute("size_z", size.z());
-
-		node.setAttribute("angular_speed", angular_speed);
 
 		return node;
 	}

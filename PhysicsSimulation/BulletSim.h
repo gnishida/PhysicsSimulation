@@ -23,13 +23,10 @@ namespace bsim {
 		void clear();
 		void load(const QString& filename);
 		void save(const QString& filename);
-		btRigidBody* addBoxObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color);
-		btRigidBody* addSphereObject(btVector3 origin, btScalar radius, bool dynamic, btVector3 color);
-		btRigidBody* addRevolvingBarObject(btVector3 origin, btVector3 size, btVector3 color, float angular_speed);
+		btRigidBody* addBoxObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color, btQuaternion quaternion = btQuaternion(0, 0, 0, 1));
+		btRigidBody* addSphereObject(btVector3 origin, btScalar radius, bool dynamic, btVector3 color, btQuaternion quaternion = btQuaternion(0, 0, 0, 1));
+		btRigidBody* addRevolvingBarObject(btVector3 origin, btVector3 size, btVector3 color, btQuaternion quaternion = btQuaternion(0, 0, 0, 1));
 		void stepSimulation(float timeStep);
-
-	private:
-		btRigidBody* addObject(btVector3 origin, btCollisionShape* shape, bool dynamic);
 	};
 
 }

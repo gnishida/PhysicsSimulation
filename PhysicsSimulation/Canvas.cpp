@@ -76,7 +76,7 @@ void Canvas::mousePressEvent(QMouseEvent* e) {
 		sim.addSphereObject(btVector3((float)e->x() / 100, (800 - (float)e->y()) / 100, 0), 0.2, true, btVector3(utils::genRand(), utils::genRand(), utils::genRand()));
 	}
 	else if (e->button() == Qt::MidButton) {
-		sim.addRevolvingBarObject(btVector3((float)e->x() / 100, (800 - (float)e->y()) / 100, 0), btVector3(1, 0.1, 5), btVector3(utils::genRand(), utils::genRand(), utils::genRand()), -0.01);
+		sim.addRevolvingBarObject(btVector3((float)e->x() / 100, (800 - (float)e->y()) / 100, 0), btVector3(1, 0.1, 5), btVector3(utils::genRand(), utils::genRand(), utils::genRand()));
 	}
 	update();
 }

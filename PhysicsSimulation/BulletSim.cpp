@@ -49,10 +49,16 @@ namespace bsim {
 		clear();
 
 		addBoxObject(btVector3(4, -4, 0), btVector3(5, 5, 5), false, btVector3(1, 1, 1));
-		addRevolvingBarObject(btVector3(4, 4, 0), btVector3(1, 0.1, 5), btVector3(0.5, 0.5, 0.5), 0.01);
+		addRevolvingBarObject(btVector3(4, 4, 0), btVector3(1, 0.1, 5), btVector3(0.5, 0.5, 0.5));
 	}
 
 	void BulletSim::clear() {
+		for (int i = dynamicsWorld->getNumConstraints() - 1; i >= 0; i--) {
+			btTypedConstraint* constraint = dynamicsWorld->getConstraint(i);
+			dynamicsWorld->removeConstraint(constraint);
+			delete constraint;
+		}
+
 		for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--) {
 			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
 			btRigidBody* body = btRigidBody::upcast(obj);
@@ -85,28 +91,26 @@ namespace bsim {
 		while (!node.isNull()) {
 			if (node.toElement().tagName() == "shape") {
 				QString type = node.toElement().attribute("type");
-				float origin_x = node.toElement().attribute("origin_x").toFloat();
-				float origin_y = node.toElement().attribute("origin_y").toFloat();
+				btVector3 origin(node.toElement().attribute("origin_x").toFloat(), node.toElement().attribute("origin_y").toFloat(), 0);
+				btQuaternion quaternion(node.toElement().attribute("quaternion_x").toFloat(), node.toElement().attribute("quaternion_y").toFloat(), node.toElement().attribute("quaternion_z").toFloat(), node.toElement().attribute("quaternion_w").toFloat());
+				//quaternion.normalize();
 				bool dynamic = node.toElement().attribute("dynamic").toLower() == "true";
-				float color_x = node.toElement().attribute("color_x").toFloat();
-				float color_y = node.toElement().attribute("color_y").toFloat();
-				float color_z = node.toElement().attribute("color_z").toFloat();
+				btVector3 color(node.toElement().attribute("color_x").toFloat(), node.toElement().attribute("color_y").toFloat(), node.toElement().attribute("color_z").toFloat());
 				if (type == "box") {
 					float size_x = node.toElement().attribute("size_x").toFloat();
 					float size_y = node.toElement().attribute("size_y").toFloat();
 					float size_z = node.toElement().attribute("size_z").toFloat();
-					addBoxObject(btVector3(origin_x, origin_y, 0), btVector3(size_x, size_y, size_z), dynamic, btVector3(color_x, color_y, color_z));
+					addBoxObject(origin, btVector3(size_x, size_y, size_z), dynamic, color, quaternion);
 				}
 				else if (type == "sphere") {
 					float radius = node.toElement().attribute("radius").toFloat();
-					addSphereObject(btVector3(origin_x, origin_y, 0), radius, dynamic, btVector3(color_x, color_y, color_z));
+					addSphereObject(origin, radius, dynamic, color, quaternion);
 				}
 				else if (type == "revolving_bar") {
 					float size_x = node.toElement().attribute("size_x").toFloat();
 					float size_y = node.toElement().attribute("size_y").toFloat();
 					float size_z = node.toElement().attribute("size_z").toFloat();
-					float angular_speed = node.toElement().attribute("angular_speed").toFloat();
-					addRevolvingBarObject(btVector3(origin_x, origin_y, 0), btVector3(size_x, size_y, size_z), btVector3(color_x, color_y, color_z), angular_speed);
+					addRevolvingBarObject(origin, btVector3(size_x, size_y, size_z), color, quaternion);
 				}
 			}
 
@@ -138,49 +142,14 @@ namespace bsim {
 
 	}
 
-	btRigidBody* BulletSim::addBoxObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color) {
-		btRigidBody* body = addObject(origin, new btBoxShape(size), dynamic);
-		shapes.push_back(new BoxShape(body, dynamic, color));
-		return body;
-	}
+	btRigidBody* BulletSim::addBoxObject(btVector3 origin, btVector3 size, bool dynamic, btVector3 color, btQuaternion quaternion) {
+		btCollisionShape* shape = new btBoxShape(size);
 
-	btRigidBody* BulletSim::addSphereObject(btVector3 origin, btScalar radius, bool dynamic, btVector3 color) {
-		btRigidBody* body = addObject(origin, new btSphereShape(radius), dynamic);
-		shapes.push_back(new SphereShape(body, dynamic, color));
-		return body;
-	}
-
-	btRigidBody* BulletSim::addRevolvingBarObject(btVector3 origin, btVector3 size, btVector3 color, float angular_speed) {
-		btRigidBody* body = addObject(origin, new btBoxShape(size), false);
-		shapes.push_back(new RevolvingBarShape(body, false, color, angular_speed));
-		return body;
-	}
-
-	void BulletSim::stepSimulation(float timeStep) {
-		for (int i = 0; i < shapes.size(); ++i) {
-			if (shapes[i]->shape_type == Shape::SHAPE_REVOLVING_BAR) {
-				shapes[i]->customStepForward();
-				/*
-				btTransform trans = shapes[i]->body->getWorldTransform();
-				btQuaternion qt = trans.getRotation();
-				float angle = atan2f(2 * qt.z() * qt.w(), (1 - 2 * qt.z() * qt.z()));
-				qt.setEuler(0, 0, angle + 0.01);
-				trans.setRotation(qt);
-				trans.setOrigin(btVector3(4, 4, 0));
-				shapes[i]->body->setWorldTransform(trans);
-				shapes[i]->body->getMotionState()->setWorldTransform(trans);
-				*/
-			}
-		}
-
-		dynamicsWorld->stepSimulation(timeStep, 10);
-	}
-
-	btRigidBody* BulletSim::addObject(btVector3 origin, btCollisionShape* shape, bool dynamic) {
 		// set transform
 		btTransform transform;
 		transform.setIdentity();
 		transform.setOrigin(origin);
+		transform.setRotation(quaternion);
 
 		btScalar mass(0.f);
 		btVector3 localInertia(0, 0, 0);
@@ -191,16 +160,91 @@ namespace bsim {
 
 		// using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 		btDefaultMotionState* myMotionState = new btDefaultMotionState(transform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
-		btRigidBody* body = new btRigidBody(rbInfo);
+		btRigidBody* body = new btRigidBody(mass, myMotionState, shape, localInertia);
 
 		// move/rotate only in X-Y plane
 		body->setLinearFactor(btVector3(1, 1, 0));
 		body->setAngularFactor(btVector3(0, 0, 1));
 
 		dynamicsWorld->addRigidBody(body);
+				
+		//btRigidBody* body = addObject(origin, new btBoxShape(size), dynamic);
+		shapes.push_back(new BoxShape(body, dynamic, color));
 
 		return body;
+	}
+
+	btRigidBody* BulletSim::addSphereObject(btVector3 origin, btScalar radius, bool dynamic, btVector3 color, btQuaternion quaternion) {
+		btCollisionShape* shape = new btSphereShape(radius);
+
+		// set transform
+		btTransform transform;
+		transform.setIdentity();
+		transform.setOrigin(origin);
+		transform.setRotation(quaternion);
+
+		btScalar mass(0.f);
+		btVector3 localInertia(0, 0, 0);
+		if (dynamic) {
+			mass = btScalar(1.f);
+			shape->calculateLocalInertia(mass, localInertia);
+		}
+
+		// using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+		btDefaultMotionState* myMotionState = new btDefaultMotionState(transform);
+		btRigidBody* body = new btRigidBody(mass, myMotionState, shape, localInertia);
+
+		// move/rotate only in X-Y plane
+		body->setLinearFactor(btVector3(1, 1, 0));
+		body->setAngularFactor(btVector3(0, 0, 1));
+
+		dynamicsWorld->addRigidBody(body);
+		
+		//btRigidBody* body = addObject(origin, new btSphereShape(radius), dynamic);
+		shapes.push_back(new SphereShape(body, dynamic, color));
+
+		return body;
+	}
+
+	btRigidBody* BulletSim::addRevolvingBarObject(btVector3 origin, btVector3 size, btVector3 color, btQuaternion quaternion) {
+		btCollisionShape* shape = new btBoxShape(size);
+
+		// set transform
+		btTransform transform;
+		transform.setIdentity();
+		transform.setOrigin(origin);
+		transform.setRotation(quaternion);
+
+		btScalar mass(1.f);
+		btVector3 localInertia(0, 0, 0);
+		shape->calculateLocalInertia(mass, localInertia);
+
+		// using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+		btDefaultMotionState* myMotionState = new btDefaultMotionState(transform);
+		btRigidBody* body = new btRigidBody(mass, myMotionState, shape, localInertia);
+
+		// move/rotate only in X-Y plane
+		body->setLinearFactor(btVector3(1, 1, 0));
+		body->setAngularFactor(btVector3(0, 0, 1));
+
+		dynamicsWorld->addRigidBody(body);
+		
+		// hinge constraint
+		btTransform trs;
+		trs.setIdentity();
+		trs.setOrigin(btVector3(0, 0, 0));
+		trs.setRotation(btQuaternion(0, 0, 1, 1));
+		btHingeConstraint* constraint = new btHingeConstraint(*body, trs);
+		dynamicsWorld->addConstraint(constraint);
+		
+		//btRigidBody* body = addObject(origin, new btBoxShape(size), false);
+		shapes.push_back(new RevolvingBarShape(body, true, color));
+
+		return body;
+	}
+
+	void BulletSim::stepSimulation(float timeStep) {
+		dynamicsWorld->stepSimulation(timeStep, 10);
 	}
 
 }

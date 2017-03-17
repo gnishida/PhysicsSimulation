@@ -33,9 +33,6 @@ namespace bsim {
 		painter.restore();
 	}
 
-	void SphereShape::customStepForward() {
-	}
-
 	QDomElement SphereShape::toXml(QDomDocument& doc) {
 		QDomElement node = doc.createElement("shape");
 		node.setAttribute("type", "sphere");
@@ -47,10 +44,12 @@ namespace bsim {
 		btTransform trans;
 		body->getMotionState()->getWorldTransform(trans);
 
-		float x = trans.getOrigin().getX() * 100;
-		float y = 800 - trans.getOrigin().getY() * 100;
 		node.setAttribute("origin_x", trans.getOrigin().getX());
 		node.setAttribute("origin_y", trans.getOrigin().getY());
+		node.setAttribute("quaternion_x", trans.getRotation().getX());
+		node.setAttribute("quaternion_y", trans.getRotation().getY());
+		node.setAttribute("quaternion_z", trans.getRotation().getZ());
+		node.setAttribute("quaternion_w", trans.getRotation().getW());
 
 		btSphereShape* shape = static_cast<btSphereShape*>(body->getCollisionShape());
 		float radius = shape->getRadius();

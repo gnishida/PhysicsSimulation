@@ -1,10 +1,5 @@
 ﻿#include "Utils.h"
-#include <regex>
 #include <sstream>
-
-#ifndef SQR
-#define SQR(x)	((x) * (x))
-#endif
 
 namespace utils {
 

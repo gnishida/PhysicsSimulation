@@ -1,5 +1,4 @@
 <world date="03/17/2017" version="1.0" author="Gen Nishida">
     <shape color_y="1" origin_y="-4" quaternion_z="0" quaternion_w="1" quaternion_x="0" color_x="1" size_z="5" size_x="5" color_z="1" type="box" origin_x="4" size_y="5" dynamic="false" quaternion_y="0"/>
     <shape color_y="0.5" origin_y="4" quaternion_z="0.884887" quaternion_w="0.465806" quaternion_x="0" color_x="0.5" size_z="5" size_x="1" color_z="0.5" type="revolving_bar" origin_x="4" size_y="0.1" dynamic="true" quaternion_y="0"/>
-    <shape color_y="0.467" origin_y="1.2" quaternion_z="-0.707107" quaternion_w="0.707107" quaternion_x="0" color_x="0.334" size_z="0.2" size_x="0.2" color_z="0.041" type="box" origin_x="1.97583" size_y="0.2" dynamic="true" quaternion_y="0"/>
 </world>

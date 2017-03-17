@@ -91,7 +91,7 @@ public:
 
     void retranslateUi(QMainWindow *MainWindowClass)
     {
-        MainWindowClass->setWindowTitle(QApplication::translate("MainWindowClass", "MainWindow", 0));
+        MainWindowClass->setWindowTitle(QApplication::translate("MainWindowClass", "Physics Simulation", 0));
         actionExit->setText(QApplication::translate("MainWindowClass", "Exit", 0));
         actionNew->setText(QApplication::translate("MainWindowClass", "New", 0));
         actionRun->setText(QApplication::translate("MainWindowClass", "Run", 0));
